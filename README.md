@@ -52,7 +52,7 @@ docker compose up -d
 
 首次启动若未挂载配置文件，入口脚本会将镜像内 `picture_embedding.yaml` 复制到 `data/.picture_embedding.yaml`。建议挂载 `./data` 与 `./models` 以持久化配置与权重。
 
-**测试/生产环境 Docker 部署**（构建推送阿里云、Compose 部署、对接 manager-api）：见 **[DEPLOY.md](./DEPLOY.md)**。
+**测试/生产 Docker 部署**（镜像 tag `picture-embedding-*`，与平台同仓库 `whalesbot-ai-platform`；目录 `/data/www/whalesbot-ai-platform/picture_embedding`，模型 `/data/models`）：见 **[DEPLOY.md](./DEPLOY.md)**。
 
 ## CI/CD
 

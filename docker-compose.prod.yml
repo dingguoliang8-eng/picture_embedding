@@ -2,10 +2,10 @@ version: '3.8'
 
 services:
   picture-embedding:
-    # 方式一：阿里云镜像（生产推荐，请修改区域与版本标签）
-    image: registry.cn-hangzhou.aliyuncs.com/dejavu_ding/picture-embedding:latest
+    # 与平台同仓库 whalesbot-ai-platform；本服务 tag：picture-embedding-<版本>
+    image: crpi-pfk0ggqf1mx18vfr.cn-shanghai.personal.cr.aliyuncs.com/whalesbot/whalesbot-ai-platform:picture-embedding-latest
 
-    # 方式二：本地构建（注释上一行 image，启用下面 build）
+    # 本地构建时注释 image，启用 build
     # build:
     #   context: .
     #   dockerfile: Dockerfile
@@ -17,9 +17,10 @@ services:
       - PYTHONUNBUFFERED=1
       - TZ=Asia/Shanghai
     volumes:
-      - ./data:/app/data
-      - ./models:/app/models
-      - ./logs:/app/logs
+      # 项目根: /data/www/whalesbot-ai-platform/picture_embedding
+      - /data/www/whalesbot-ai-platform/picture_embedding/data:/app/data
+      - /data/models:/app/models:ro
+      - /data/www/whalesbot-ai-platform/picture_embedding/logs:/app/logs
     ports:
       - "8010:8010"
     logging:

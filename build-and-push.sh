@@ -1,49 +1,52 @@
 #!/bin/bash
 set -e
 
-# 配置变量（请根据实际情况修改）
-REGISTRY="registry.cn-hangzhou.aliyuncs.com"
-NAMESPACE="dejavu_ding"
-IMAGE_NAME="picture-embedding"
+# 与平台共用同一镜像仓库 whalesbot-ai-platform，本服务使用 picture-embedding-<版本> 标签
+REGISTRY="crpi-pfk0ggqf1mx18vfr.cn-shanghai.personal.cr.aliyuncs.com"
+NAMESPACE="whalesbot"
+IMAGE_NAME="whalesbot-ai-platform"
 VERSION=${1:-latest}
+IMAGE_TAG="picture-embedding-${VERSION}"
 
-FULL_IMAGE_NAME="${REGISTRY}/${NAMESPACE}/${IMAGE_NAME}:${VERSION}"
+LOCAL_IMAGE="picture-embedding:${VERSION}"
+FULL_IMAGE_NAME="${REGISTRY}/${NAMESPACE}/${IMAGE_NAME}:${IMAGE_TAG}"
 
 echo "=========================================="
-echo "构建并推送 Docker 镜像到阿里云"
-echo "镜像: ${FULL_IMAGE_NAME}"
+echo "构建并推送 Docker 镜像"
+echo "远程: ${FULL_IMAGE_NAME}"
 echo "=========================================="
 
 if ! command -v docker &> /dev/null; then
-    echo "错误: Docker 未安装，请先安装 Docker"
+    echo "错误: Docker 未安装"
     exit 1
 fi
 
-echo "检查 Docker 登录状态..."
 if ! docker info &> /dev/null; then
-    echo "警告: 无法连接到 Docker daemon，请确保 Docker 正在运行"
+    echo "错误: Docker daemon 未运行"
     exit 1
 fi
 
-echo "提示: 如果推送失败，请先登录阿里云镜像仓库："
-echo "docker login --username=<你的用户名> ${REGISTRY}"
+echo "提示: 推送前请先登录："
+echo "  docker login --username=leocao0828 ${REGISTRY}"
 echo ""
 
 echo "正在构建镜像..."
-docker build -t ${IMAGE_NAME}:${VERSION} .
+docker build -t ${LOCAL_IMAGE} .
 
 echo "正在标记镜像..."
-docker tag ${IMAGE_NAME}:${VERSION} ${FULL_IMAGE_NAME}
+docker tag ${LOCAL_IMAGE} ${FULL_IMAGE_NAME}
 
-echo "正在推送镜像到阿里云..."
+echo "正在推送镜像..."
 docker push ${FULL_IMAGE_NAME}
 
 echo "=========================================="
-echo "✅ 完成！镜像已推送到: ${FULL_IMAGE_NAME}"
+echo "✅ 完成: ${FULL_IMAGE_NAME}"
 echo ""
-echo "在测试环境部署步骤："
-echo "1. docker login --username=<你的用户名> ${REGISTRY}"
-echo "2. docker compose -f docker-compose.test.yml pull"
-echo "3. docker compose -f docker-compose.test.yml up -d"
-echo "4. docker compose -f docker-compose.test.yml logs -f"
+echo "拉取: docker pull ${FULL_IMAGE_NAME}"
+echo ""
+echo "部署:"
+echo "  cd /data/www/whalesbot-ai-platform/picture_embedding"
+echo "  # 确认 docker-compose.prod.yml 中 image 标签为 ${IMAGE_TAG}"
+echo "  docker compose -f docker-compose.prod.yml pull"
+echo "  docker compose -f docker-compose.prod.yml up -d"
 echo "=========================================="
