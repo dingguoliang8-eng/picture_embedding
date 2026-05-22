@@ -1,0 +1,21 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+build/
+dist/
+*.egg-info/
+.venv/
+venv/
+ENV/
+.idea/
+logs/
+tmp/
+data/
+.env
+*.log
+
+# 模型缓存（运行时下载）
+models/hub/
+models/huggingface/

@@ -1,0 +1,15 @@
+server:
+  host: 0.0.0.0
+  port: 8010
+  # 请求头鉴权：非空则必须携带 X-Api-Key（或 apikey）且值与此一致；留空则关闭鉴权
+  apikey: ""
+
+embedding:
+  # 与 whalesbotai-server core/utils/popup_book_dinov3.py 一致
+  model_name: "facebook/dinov3-vitl16-pretrain-lvd1689m"
+  models_dir: "models"
+  # 默认是否 rembg 去背景裁剪（绘本对齐场景可改为 true）
+  default_smart_crop: false
+
+logging:
+  level: INFO

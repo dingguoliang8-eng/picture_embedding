@@ -1,0 +1,10 @@
+__pycache__
+.git
+.idea
+logs
+tmp
+data
+models/hub
+models/huggingface
+*.md
+.github

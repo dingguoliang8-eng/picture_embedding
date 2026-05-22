@@ -1,0 +1,16 @@
+version: "3.8"
+services:
+  picture-embedding:
+    build: .
+    image: picture-embedding:latest
+    container_name: picture-embedding
+    restart: always
+    ports:
+      - "8010:8010"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TZ=Asia/Shanghai
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./logs:/app/logs
