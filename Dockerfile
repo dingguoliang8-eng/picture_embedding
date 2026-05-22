@@ -1,7 +1,7 @@
 # 第一阶段：构建依赖
 FROM python:3.10-slim AS builder
 
-# cpu：官方 CPU wheel；cuda：官方 CUDA wheel（需运行容器配 nvidia-container-toolkit）
+# cpu/cuda：阿里云 pytorch-wheels 镜像（需 GPU 运行时配 nvidia-container-toolkit）
 # 构建时由 build-and-push 传入：TORCH_DEVICE=cpu|cuda（脚本会各打一张镜像）
 ARG TORCH_DEVICE=cpu
 ARG TORCH_CUDA=cu126
@@ -30,23 +30,12 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
     -i https://mirrors.aliyun.com/pypi/simple/ \
     --trusted-host mirrors.aliyun.com \
     --timeout 600
-
-# PyTorch：CPU 走阿里云；CUDA wheel 仅官方索引提供
-RUN if [ "$TORCH_DEVICE" = "cuda" ]; then \
-        echo "安装 PyTorch (CUDA ${TORCH_CUDA}): download.pytorch.org"; \
-        pip install --no-cache-dir --prefer-binary \
-            torch==2.9.1 torchvision==0.24.1 \
-            --index-url "https://download.pytorch.org/whl/${TORCH_CUDA}" \
-            --trusted-host download.pytorch.org \
-            --timeout 600 --retries 10; \
-    else \
-        echo "安装 PyTorch (CPU): 阿里云 PyPI"; \
-        pip install --no-cache-dir --prefer-binary \
-            torch==2.9.1 torchvision==0.24.1 \
-            -i https://mirrors.aliyun.com/pypi/simple/ \
-            --trusted-host mirrors.aliyun.com \
-            --timeout 600 --retries 10; \
-    fi
+# PyTorch：使用清华源（确保有 2.9.1 版本）
+RUN pip install --no-cache-dir --prefer-binary \
+    torch==2.9.1 torchvision==0.24.1 \
+    -i https://pypi.tuna.tsinghua.edu.cn/simple \
+    --trusted-host pypi.tuna.tsinghua.edu.cn \
+    --timeout 600 --retries 10
 
 # 其余依赖：阿里云 PyPI
 RUN pip install --no-cache-dir --prefer-binary -r requirements-base.txt \

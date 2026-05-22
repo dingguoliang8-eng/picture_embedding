@@ -468,7 +468,7 @@ docker stats picture-embedding
 ### 构建卡在 `torch` / `torchvision`
 
 1. 使用 `./build-and-push.sh` 一次打出 `-cpu` 与 `-gpu`；手写 `docker build` 须带 `--build-arg TORCH_DEVICE`。
-2. CUDA 版仅走 `download.pytorch.org/whl/cu126`（CUDA 12.6），国内慢可设 `HTTP_PROXY`/`HTTPS_PROXY`。
+2. GPU 版 PyTorch 走阿里云 `mirrors.aliyun.com/pytorch-wheels/cu126`（与官方 `download.pytorch.org/whl/cu126` 等价）；若镜像站暂无对应版本，可临时改 Dockerfile 回官方源或设代理。
 3. 本地开发仍用 `pip install -r requirements.txt`，与镜像构建策略无关。
 
 ### CPU / GPU 镜像与部署（部署时可选）
