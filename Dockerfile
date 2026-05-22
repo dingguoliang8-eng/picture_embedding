@@ -1,6 +1,11 @@
 # 第一阶段：构建依赖
 FROM python:3.10-slim AS builder
 
+# cpu：官方 CPU wheel；cuda：官方 CUDA wheel（需运行容器配 nvidia-container-toolkit）
+# 构建时由 build-and-push 根据本机 nvidia-smi 传入，或手动 --build-arg TORCH_DEVICE=cuda
+ARG TORCH_DEVICE=cpu
+ARG TORCH_CUDA=cu124
+
 RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list 2>/dev/null || true \
     && sed -i 's/security.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list 2>/dev/null || true \
     && sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources 2>/dev/null || true \
@@ -14,15 +19,43 @@ RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list 2>/dev/
 
 WORKDIR /app
 
-# pip 阿里云源（加速构建阶段依赖安装）
-ENV PIP_INDEX_URL=https://mirrors.aliyun.com/pypi/simple/ \
-    PIP_TRUSTED_HOST=mirrors.aliyun.com
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_DEFAULT_TIMEOUT=600 \
+    PIP_PROGRESS_BAR=off
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY requirements-base.txt .
+
+# PyTorch：按 TORCH_DEVICE 选择索引（勿用阿里云 PyPI 拉 torch）
+RUN if [ "$TORCH_DEVICE" = "cuda" ]; then \
+        PYTORCH_INDEX="https://download.pytorch.org/whl/${TORCH_CUDA}"; \
+        echo "安装 PyTorch (CUDA ${TORCH_CUDA}): ${PYTORCH_INDEX}"; \
+    else \
+        PYTORCH_INDEX="https://download.pytorch.org/whl/cpu"; \
+        echo "安装 PyTorch (CPU): ${PYTORCH_INDEX}"; \
+    fi \
+    && pip install --no-cache-dir --upgrade pip setuptools wheel \
+    && ( pip install --no-cache-dir --prefer-binary \
+            torch==2.9.1 torchvision==0.24.1 \
+            --index-url "${PYTORCH_INDEX}" \
+            --trusted-host download.pytorch.org \
+            --timeout 600 --retries 10 \
+        || { [ "$TORCH_DEVICE" = "cpu" ] && pip install --no-cache-dir --prefer-binary \
+                torch==2.9.1 torchvision==0.24.1 \
+                -i https://pypi.tuna.tsinghua.edu.cn/simple \
+                --trusted-host pypi.tuna.tsinghua.edu.cn \
+                --timeout 600 --retries 10; } )
+
+# 其余依赖：阿里云 PyPI
+RUN pip install --no-cache-dir --prefer-binary -r requirements-base.txt \
+    -i https://mirrors.aliyun.com/pypi/simple/ \
+    --trusted-host mirrors.aliyun.com \
+    --timeout 300 --retries 10
 
 # 运行阶段
 FROM python:3.10-slim
+
+ARG TORCH_DEVICE=cpu
+ENV PICTURE_EMBEDDING_TORCH_DEVICE=${TORCH_DEVICE}
 
 RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list 2>/dev/null || true \
     && sed -i 's/security.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list 2>/dev/null || true \

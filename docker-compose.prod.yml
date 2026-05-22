@@ -2,8 +2,8 @@ version: '3.8'
 
 services:
   picture-embedding:
-    # 与平台同仓库 whalesbot-ai-platform；本服务 tag：picture-embedding-<版本>
-    image: crpi-pfk0ggqf1mx18vfr.cn-shanghai.personal.cr.aliyuncs.com/whalesbot/whalesbot-ai-platform:picture-embedding-latest
+    # 与平台同仓库；CPU 镜像 tag：picture-embedding-<版本>-cpu（GPU 见 docker-compose.prod.gpu.yml）
+    image: crpi-pfk0ggqf1mx18vfr.cn-shanghai.personal.cr.aliyuncs.com/whalesbot/whalesbot-ai-platform:picture-embedding-latest-cpu
 
     # 本地构建时注释 image，启用 build
     # build:

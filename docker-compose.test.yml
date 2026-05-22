@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   picture-embedding:
-    image: crpi-pfk0ggqf1mx18vfr.cn-shanghai.personal.cr.aliyuncs.com/whalesbot/whalesbot-ai-platform:picture-embedding-latest
+    image: crpi-pfk0ggqf1mx18vfr.cn-shanghai.personal.cr.aliyuncs.com/whalesbot/whalesbot-ai-platform:picture-embedding-latest-cpu
     container_name: picture-embedding
     restart: always
     environment:
