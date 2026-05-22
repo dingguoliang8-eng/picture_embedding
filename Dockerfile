@@ -2,7 +2,7 @@
 FROM python:3.10-slim AS builder
 
 # cpu：官方 CPU wheel；cuda：官方 CUDA wheel（需运行容器配 nvidia-container-toolkit）
-# 构建时由 build-and-push 根据本机 nvidia-smi 传入，或手动 --build-arg TORCH_DEVICE=cuda
+# 构建时由 build-and-push 传入：TORCH_DEVICE=cpu|cuda（脚本会各打一张镜像）
 ARG TORCH_DEVICE=cpu
 ARG TORCH_CUDA=cu124
 

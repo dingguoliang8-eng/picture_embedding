@@ -6,48 +6,40 @@ set NAMESPACE=whalesbot
 set IMAGE_NAME=whalesbot-ai-platform
 set VERSION=%1
 if "%VERSION%"=="" set VERSION=latest
-set TORCH_CUDA=cu124
 if not defined TORCH_CUDA set TORCH_CUDA=cu124
 
-if defined TORCH_DEVICE (
-  set DEVICE=%TORCH_DEVICE%
-) else (
-  where nvidia-smi >nul 2>&1
-  if !errorlevel! equ 0 (
-    nvidia-smi >nul 2>&1
-    if !errorlevel! equ 0 (
-      set DEVICE=cuda
-      echo 检测到 NVIDIA GPU，构建 CUDA 版
-    ) else (
-      set DEVICE=cpu
-      echo 未检测到 GPU，构建 CPU 版
-    )
-  ) else (
-    set DEVICE=cpu
-    echo 未检测到 GPU，构建 CPU 版
-  )
-)
-
-set IMAGE_TAG=picture-embedding-%VERSION%-%DEVICE%
-set LOCAL_IMAGE=picture-embedding:%VERSION%-%DEVICE%
-set FULL_IMAGE_NAME=%REGISTRY%/%NAMESPACE%/%IMAGE_NAME%:%IMAGE_TAG%
-
 echo ==========================================
-echo PyTorch: %DEVICE%  远程: %FULL_IMAGE_NAME%
+echo picture-embedding 双镜像构建 cpu + gpu
+echo 版本: %VERSION%
 echo ==========================================
 
-docker build --build-arg TORCH_DEVICE=%DEVICE% --build-arg TORCH_CUDA=%TORCH_CUDA% -t %LOCAL_IMAGE% .
+call :build_and_push cpu
+if errorlevel 1 exit /b 1
+call :build_and_push cuda
 if errorlevel 1 exit /b 1
 
-docker tag %LOCAL_IMAGE% %FULL_IMAGE_NAME%
-if errorlevel 1 exit /b 1
+echo.
+echo 完成:
+echo   .../picture-embedding-%VERSION%-cpu
+echo   .../picture-embedding-%VERSION%-gpu
+exit /b 0
 
-docker push %FULL_IMAGE_NAME%
+:build_and_push
+set DEVICE=%~1
+set TAG=picture-embedding-%VERSION%-%DEVICE%
+set LOCAL=picture-embedding:%VERSION%-%DEVICE%
+set REMOTE=%REGISTRY%/%NAMESPACE%/%IMAGE_NAME%:%TAG%
+
+echo.
+echo ---------- 构建 %DEVICE% ----------
+docker build --build-arg TORCH_DEVICE=%DEVICE% --build-arg TORCH_CUDA=%TORCH_CUDA% -t %LOCAL% .
+if errorlevel 1 exit /b 1
+docker tag %LOCAL% %REMOTE%
+if errorlevel 1 exit /b 1
+docker push %REMOTE%
 if errorlevel 1 (
     echo 推送失败: docker login --username=leocao0828 %REGISTRY%
     exit /b 1
 )
-
-echo 完成: %FULL_IMAGE_NAME%
-echo 强制 CPU: set TORCH_DEVICE=cpu ^& %0 %VERSION%
-echo 强制 GPU: set TORCH_DEVICE=cuda ^& %0 %VERSION%
+echo 已推送 %REMOTE%
+exit /b 0

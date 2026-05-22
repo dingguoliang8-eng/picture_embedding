@@ -45,7 +45,7 @@
 | 仓库域名 | `crpi-pfk0ggqf1mx18vfr.cn-shanghai.personal.cr.aliyuncs.com` |
 | 命名空间 | `whalesbot` |
 | 镜像名（与平台共用） | `whalesbot-ai-platform` |
-| 本服务 tag | `picture-embedding-<版本>-cpu` 或 `...-gpu` |
+| 本服务 tag | 每次发布同时打 `picture-embedding-<版本>-cpu` 与 `-gpu`，部署时二选一 |
 | 完整地址示例 | `.../whalesbot-ai-platform:picture-embedding-v1.0.0-cpu` |
 | 平台主服务 tag 示例 | `latest` 或 `v1.0.0`（勿与子服务 tag 混用） |
 
@@ -149,26 +149,35 @@ build-and-push.bat v1.0.0          # 推送版本标签
 docker login --username=leocao0828 crpi-pfk0ggqf1mx18vfr.cn-shanghai.personal.cr.aliyuncs.com
 ```
 
-#### 2. 构建并推送（推荐，自动检测 GPU）
+#### 2. 构建并推送（推荐，**一次打出 cpu + gpu 两个 tag**）
 
 ```bash
 chmod +x build-and-push.sh
 ./build-and-push.sh v1.0.0
+# 或 ./build-and-push.sh latest
 ```
 
-> 脚本会 `nvidia-smi` 检测：有 GPU → 构建 CUDA 包并推送 `picture-embedding-v1.0.0-gpu`；无 GPU → `...-cpu`。  
-> 强制：`TORCH_DEVICE=cpu ./build-and-push.sh v1.0.0` 或 `TORCH_DEVICE=cuda TORCH_CUDA=cu124 ./build-and-push.sh v1.0.0`
+脚本**无论构建机是否有 GPU**，都会依次构建并推送：
 
-#### 3. 手动构建（须传 build-arg）
+- `.../whalesbot-ai-platform:picture-embedding-v1.0.0-cpu`
+- `.../whalesbot-ai-platform:picture-embedding-v1.0.0-gpu`
+
+GPU 版使用 `TORCH_CUDA=cu124`（可用环境变量覆盖）。构建机本身不需要 NVIDIA 驱动。
+
+#### 3. 手动构建（单个 variant）
 
 ```bash
-docker build \
-  --build-arg TORCH_DEVICE=cpu \
-  --build-arg TORCH_CUDA=cu124 \
-  -t picture-embedding:v1.0.0-cpu .
+# CPU
+docker build --build-arg TORCH_DEVICE=cpu -t picture-embedding:v1.0.0-cpu .
 docker tag picture-embedding:v1.0.0-cpu \
   crpi-pfk0ggqf1mx18vfr.cn-shanghai.personal.cr.aliyuncs.com/whalesbot/whalesbot-ai-platform:picture-embedding-v1.0.0-cpu
 docker push crpi-pfk0ggqf1mx18vfr.cn-shanghai.personal.cr.aliyuncs.com/whalesbot/whalesbot-ai-platform:picture-embedding-v1.0.0-cpu
+
+# GPU（构建机可无 GPU）
+docker build --build-arg TORCH_DEVICE=cuda --build-arg TORCH_CUDA=cu124 -t picture-embedding:v1.0.0-gpu .
+docker tag picture-embedding:v1.0.0-gpu \
+  crpi-pfk0ggqf1mx18vfr.cn-shanghai.personal.cr.aliyuncs.com/whalesbot/whalesbot-ai-platform:picture-embedding-v1.0.0-gpu
+docker push crpi-pfk0ggqf1mx18vfr.cn-shanghai.personal.cr.aliyuncs.com/whalesbot/whalesbot-ai-platform:picture-embedding-v1.0.0-gpu
 ```
 
 ### 方式三：本地开发（不推送仓库）
@@ -458,28 +467,30 @@ docker stats picture-embedding
 
 ### 构建卡在 `torch` / `torchvision`
 
-1. 使用 `./build-and-push.sh`，不要手写 `docker build` 漏传 `--build-arg TORCH_DEVICE`。
-2. **CPU 机**打 `-cpu` 镜像，**GPU 机**打 `-gpu`；生产 GPU 服务器须拉 `-gpu` 并用 `docker-compose.prod.gpu.yml`。
-3. 强制指定：`TORCH_DEVICE=cpu ./build-and-push.sh v1.0.0` 或 `TORCH_DEVICE=cuda TORCH_CUDA=cu124 ./build-and-push.sh v1.0.0`。
-4. CUDA 版仅走 `download.pytorch.org/whl/cu124`，国内慢可设 `HTTP_PROXY`/`HTTPS_PROXY`。
-5. 本地开发仍用 `pip install -r requirements.txt`，与镜像构建策略无关。
+1. 使用 `./build-and-push.sh` 一次打出 `-cpu` 与 `-gpu`；手写 `docker build` 须带 `--build-arg TORCH_DEVICE`。
+2. CUDA 版仅走 `download.pytorch.org/whl/cu124`，国内慢可设 `HTTP_PROXY`/`HTTPS_PROXY`。
+3. 本地开发仍用 `pip install -r requirements.txt`，与镜像构建策略无关。
 
-### CPU / GPU 镜像与部署
+### CPU / GPU 镜像与部署（部署时可选）
 
-| 场景 | 构建 | 生产 compose |
-|------|------|----------------|
-| 无 GPU | 自动或 `TORCH_DEVICE=cpu` → tag `picture-embedding-v1.0.0-cpu` | `docker-compose.prod.yml` |
-| 有 GPU | 在带 `nvidia-smi` 机器构建 → tag `...-gpu` | 叠加 `docker-compose.prod.gpu.yml` |
+每次发布仓库里**同时存在**两个 tag，按环境选用：
+
+| 环境 | 使用的 tag | Compose |
+|------|------------|---------|
+| 测试 / 无 GPU | `picture-embedding-<版本>-cpu` | `docker-compose.prod.yml` 或 `docker-compose.test.yml` |
+| 生产 GPU | `picture-embedding-<版本>-gpu` | `docker-compose.prod.yml` + `docker-compose.prod.gpu.yml` |
 
 ```bash
-# GPU 生产（需 nvidia-container-toolkit，镜像 tag 与构建一致）
+# 测试 / CPU
+docker compose -f docker-compose.test.yml pull
+docker compose -f docker-compose.test.yml up -d
+
+# 生产 GPU（需 nvidia-container-toolkit；compose 内 image 改为对应 -gpu tag）
 docker compose -f docker-compose.prod.yml -f docker-compose.prod.gpu.yml pull
 docker compose -f docker-compose.prod.yml -f docker-compose.prod.gpu.yml up -d
 ```
 
-容器内 `PICTURE_EMBEDDING_TORCH_DEVICE` 为 `cpu` 或 `cuda`；`device_map=auto` 在 CUDA 镜像且挂载 GPU 时会用 GPU 推理。
-
-**说明**：检测的是**构建机**是否有 GPU（决定默认打哪种包）；生产是 GPU 环境时，可在无 GPU 的 CI 上执行 `TORCH_DEVICE=cuda ./build-and-push.sh v1.0.0` 打出 `-gpu` 镜像，再在 GPU 服务器上拉取部署。
+将 `docker-compose.prod.gpu.yml` 里的 `image` 版本号与 `docker-compose.prod.yml` 保持一致（仅后缀 `-gpu` 不同）。
 
 ### 模型下载失败
 
