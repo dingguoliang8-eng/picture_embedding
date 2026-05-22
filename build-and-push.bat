@@ -6,7 +6,7 @@ set NAMESPACE=whalesbot
 set IMAGE_NAME=whalesbot-ai-platform
 set VERSION=%1
 if "%VERSION%"=="" set VERSION=latest
-if not defined TORCH_CUDA set TORCH_CUDA=cu124
+if not defined TORCH_CUDA set TORCH_CUDA=cu126
 
 echo ==========================================
 echo picture-embedding 双镜像构建 cpu + gpu

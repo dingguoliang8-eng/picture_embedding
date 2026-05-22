@@ -162,7 +162,7 @@ chmod +x build-and-push.sh
 - `.../whalesbot-ai-platform:picture-embedding-v1.0.0-cpu`
 - `.../whalesbot-ai-platform:picture-embedding-v1.0.0-gpu`
 
-GPU 版使用 `TORCH_CUDA=cu124`（可用环境变量覆盖）。构建机本身不需要 NVIDIA 驱动。
+GPU 版使用 `TORCH_CUDA=cu126`（CUDA 12.6，可用环境变量覆盖）。构建机本身不需要 NVIDIA 驱动。
 
 #### 3. 手动构建（单个 variant）
 
@@ -174,7 +174,7 @@ docker tag picture-embedding:v1.0.0-cpu \
 docker push crpi-pfk0ggqf1mx18vfr.cn-shanghai.personal.cr.aliyuncs.com/whalesbot/whalesbot-ai-platform:picture-embedding-v1.0.0-cpu
 
 # GPU（构建机可无 GPU）
-docker build --build-arg TORCH_DEVICE=cuda --build-arg TORCH_CUDA=cu124 -t picture-embedding:v1.0.0-gpu .
+docker build --build-arg TORCH_DEVICE=cuda --build-arg TORCH_CUDA=cu126 -t picture-embedding:v1.0.0-gpu .
 docker tag picture-embedding:v1.0.0-gpu \
   crpi-pfk0ggqf1mx18vfr.cn-shanghai.personal.cr.aliyuncs.com/whalesbot/whalesbot-ai-platform:picture-embedding-v1.0.0-gpu
 docker push crpi-pfk0ggqf1mx18vfr.cn-shanghai.personal.cr.aliyuncs.com/whalesbot/whalesbot-ai-platform:picture-embedding-v1.0.0-gpu
@@ -468,7 +468,7 @@ docker stats picture-embedding
 ### 构建卡在 `torch` / `torchvision`
 
 1. 使用 `./build-and-push.sh` 一次打出 `-cpu` 与 `-gpu`；手写 `docker build` 须带 `--build-arg TORCH_DEVICE`。
-2. CUDA 版仅走 `download.pytorch.org/whl/cu124`，国内慢可设 `HTTP_PROXY`/`HTTPS_PROXY`。
+2. CUDA 版仅走 `download.pytorch.org/whl/cu126`（CUDA 12.6），国内慢可设 `HTTP_PROXY`/`HTTPS_PROXY`。
 3. 本地开发仍用 `pip install -r requirements.txt`，与镜像构建策略无关。
 
 ### CPU / GPU 镜像与部署（部署时可选）

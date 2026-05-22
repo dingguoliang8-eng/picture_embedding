@@ -5,7 +5,7 @@ REGISTRY="crpi-pfk0ggqf1mx18vfr.cn-shanghai.personal.cr.aliyuncs.com"
 NAMESPACE="whalesbot"
 IMAGE_NAME="whalesbot-ai-platform"
 VERSION=${1:-latest}
-TORCH_CUDA="${TORCH_CUDA:-cu124}"
+TORCH_CUDA="${TORCH_CUDA:-cu126}"
 
 build_and_push() {
   local device=$1

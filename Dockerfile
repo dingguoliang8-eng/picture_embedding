@@ -4,7 +4,7 @@ FROM python:3.10-slim AS builder
 # cpu：官方 CPU wheel；cuda：官方 CUDA wheel（需运行容器配 nvidia-container-toolkit）
 # 构建时由 build-and-push 传入：TORCH_DEVICE=cpu|cuda（脚本会各打一张镜像）
 ARG TORCH_DEVICE=cpu
-ARG TORCH_CUDA=cu124
+ARG TORCH_CUDA=cu126
 
 RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list 2>/dev/null || true \
     && sed -i 's/security.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list 2>/dev/null || true \
