@@ -1,8 +1,6 @@
-version: '3.8'
-
 services:
   picture-embedding:
-    image: crpi-pfk0ggqf1mx18vfr.cn-shanghai.personal.cr.aliyuncs.com/whalesbot/whalesbot-ai-platform:picture-embedding-latest-cpu
+    image: crpi-pfk0ggqf1mx18vfr.cn-shanghai.personal.cr.aliyuncs.com/whalesbot/whalesbot-ai-platform:picture-embedding-latest
     container_name: picture-embedding
     restart: always
     environment:
@@ -10,7 +8,7 @@ services:
       - TZ=Asia/Shanghai
     volumes:
       - ./data:/app/data
-      # 测试环境若与生产共用模型盘，可改为: /data/models:/app/models:ro
+      # 测试环境若与生产共用模型盘，可改为: /data/model:/app/models
       - ./models:/app/models
       - ./logs:/app/logs
     ports:

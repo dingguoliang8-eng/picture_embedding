@@ -1,10 +1,8 @@
-# GPU 生产部署：与 docker-compose.prod.yml 叠加使用
-# 镜像 tag 须为 picture-embedding-<版本>-gpu（build-and-push 在含 GPU 机器上构建）
+# GPU 生产部署：与 docker-compose.prod.yml 叠加使用（同一镜像，仅增加 NVIDIA 设备预留）
 # 前置：安装 nvidia-container-toolkit
 
 services:
   picture-embedding:
-    image: crpi-pfk0ggqf1mx18vfr.cn-shanghai.personal.cr.aliyuncs.com/whalesbot/whalesbot-ai-platform:picture-embedding-latest-gpu
     deploy:
       resources:
         reservations:

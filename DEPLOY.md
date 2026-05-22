@@ -32,7 +32,7 @@
 |------|------|
 | 容器名 | `picture-embedding` |
 | 镜像仓库 | `whalesbot/whalesbot-ai-platform`（与平台同一仓库） |
-| 本服务镜像 tag | `picture-embedding-<版本>-cpu` / `picture-embedding-<版本>-gpu` |
+| 本服务镜像 tag | `picture-embedding-<版本>`（CPU/GPU 共用，运行时 `device_map=auto` 选设备） |
 | 默认端口 | `8010` |
 | API 文档 | `http://<host>:8010/picture-embedding/docs` |
 | 向量接口 | `POST /picture-embedding/embed` |
@@ -45,8 +45,8 @@
 | 仓库域名 | `crpi-pfk0ggqf1mx18vfr.cn-shanghai.personal.cr.aliyuncs.com` |
 | 命名空间 | `whalesbot` |
 | 镜像名（与平台共用） | `whalesbot-ai-platform` |
-| 本服务 tag | 每次发布同时打 `picture-embedding-<版本>-cpu` 与 `-gpu`，部署时二选一 |
-| 完整地址示例 | `.../whalesbot-ai-platform:picture-embedding-v1.0.0-cpu` |
+| 本服务 tag | `picture-embedding-<版本>`，如 `picture-embedding-latest` |
+| 完整地址示例 | `.../whalesbot-ai-platform:picture-embedding-latest` |
 | 平台主服务 tag 示例 | `latest` 或 `v1.0.0`（勿与子服务 tag 混用） |
 
 登录（用户名以控制台为准）：
@@ -58,7 +58,7 @@ docker login --username=leocao0828 crpi-pfk0ggqf1mx18vfr.cn-shanghai.personal.cr
 拉取示例：
 
 ```bash
-docker pull crpi-pfk0ggqf1mx18vfr.cn-shanghai.personal.cr.aliyuncs.com/whalesbot/whalesbot-ai-platform:picture-embedding-v1.0.0-cpu
+docker pull crpi-pfk0ggqf1mx18vfr.cn-shanghai.personal.cr.aliyuncs.com/whalesbot/whalesbot-ai-platform:picture-embedding-latest
 ```
 
 推送流程（构建机，**同一仓库、不同 tag**）：
@@ -66,8 +66,8 @@ docker pull crpi-pfk0ggqf1mx18vfr.cn-shanghai.personal.cr.aliyuncs.com/whalesbot
 ```bash
 docker build -t picture-embedding:v1.0.0 .
 docker tag picture-embedding:v1.0.0 \
-  crpi-pfk0ggqf1mx18vfr.cn-shanghai.personal.cr.aliyuncs.com/whalesbot/whalesbot-ai-platform:picture-embedding-v1.0.0-cpu
-docker push crpi-pfk0ggqf1mx18vfr.cn-shanghai.personal.cr.aliyuncs.com/whalesbot/whalesbot-ai-platform:picture-embedding-v1.0.0-cpu
+  crpi-pfk0ggqf1mx18vfr.cn-shanghai.personal.cr.aliyuncs.com/whalesbot/whalesbot-ai-platform:picture-embedding-v1.0.0
+docker push crpi-pfk0ggqf1mx18vfr.cn-shanghai.personal.cr.aliyuncs.com/whalesbot/whalesbot-ai-platform:picture-embedding-v1.0.0
 ```
 
 > 与平台共用 `whalesbot/whalesbot-ai-platform` 仓库；本服务使用 **`picture-embedding-` 前缀 tag**，勿与平台 `latest` / `v*` 混用。
@@ -79,7 +79,7 @@ docker push crpi-pfk0ggqf1mx18vfr.cn-shanghai.personal.cr.aliyuncs.com/whalesbot
 | 服务（示例） | tag 示例 | 说明 |
 |--------------|----------|------|
 | 平台主包 | `latest`、`v1.0.0` | 仅主平台使用，勿被子服务占用 |
-| picture-embedding | `picture-embedding-v1.0.0-cpu` / `-gpu` | 本仓库 |
+| picture-embedding | `picture-embedding-v1.0.0` | 本仓库 |
 | voiceprint-api | `voiceprint-api-v1.0.0` | 示例 |
 | manager-api | `manager-api-v1.0.0` | 示例（若为 Java 镜像） |
 | whalesbotai-server | `whalesbotai-server-v1.0.0` | 示例 |
@@ -149,7 +149,7 @@ build-and-push.bat v1.0.0          # 推送版本标签
 docker login --username=leocao0828 crpi-pfk0ggqf1mx18vfr.cn-shanghai.personal.cr.aliyuncs.com
 ```
 
-#### 2. 构建并推送（推荐，**一次打出 cpu + gpu 两个 tag**）
+#### 2. 构建并推送（推荐）
 
 ```bash
 chmod +x build-and-push.sh
@@ -157,27 +157,20 @@ chmod +x build-and-push.sh
 # 或 ./build-and-push.sh latest
 ```
 
-脚本**无论构建机是否有 GPU**，都会依次构建并推送：
+脚本推送单一 tag，例如：
 
-- `.../whalesbot-ai-platform:picture-embedding-v1.0.0-cpu`
-- `.../whalesbot-ai-platform:picture-embedding-v1.0.0-gpu`
+- `.../whalesbot-ai-platform:picture-embedding-v1.0.0`
+- `.../whalesbot-ai-platform:picture-embedding-latest`
 
-GPU 版使用 `TORCH_CUDA=cu126`（CUDA 12.6，可用环境变量覆盖）。构建机本身不需要 NVIDIA 驱动。
+构建机不需要 NVIDIA 驱动；GPU 机器部署时叠加 `docker-compose.prod.gpu.yml` 即可。
 
-#### 3. 手动构建（单个 variant）
+#### 3. 手动构建
 
 ```bash
-# CPU
-docker build --build-arg TORCH_DEVICE=cpu -t picture-embedding:v1.0.0-cpu .
-docker tag picture-embedding:v1.0.0-cpu \
-  crpi-pfk0ggqf1mx18vfr.cn-shanghai.personal.cr.aliyuncs.com/whalesbot/whalesbot-ai-platform:picture-embedding-v1.0.0-cpu
-docker push crpi-pfk0ggqf1mx18vfr.cn-shanghai.personal.cr.aliyuncs.com/whalesbot/whalesbot-ai-platform:picture-embedding-v1.0.0-cpu
-
-# GPU（构建机可无 GPU）
-docker build --build-arg TORCH_DEVICE=cuda --build-arg TORCH_CUDA=cu126 -t picture-embedding:v1.0.0-gpu .
-docker tag picture-embedding:v1.0.0-gpu \
-  crpi-pfk0ggqf1mx18vfr.cn-shanghai.personal.cr.aliyuncs.com/whalesbot/whalesbot-ai-platform:picture-embedding-v1.0.0-gpu
-docker push crpi-pfk0ggqf1mx18vfr.cn-shanghai.personal.cr.aliyuncs.com/whalesbot/whalesbot-ai-platform:picture-embedding-v1.0.0-gpu
+docker build -t picture-embedding:v1.0.0 .
+docker tag picture-embedding:v1.0.0 \
+  crpi-pfk0ggqf1mx18vfr.cn-shanghai.personal.cr.aliyuncs.com/whalesbot/whalesbot-ai-platform:picture-embedding-v1.0.0
+docker push crpi-pfk0ggqf1mx18vfr.cn-shanghai.personal.cr.aliyuncs.com/whalesbot/whalesbot-ai-platform:picture-embedding-v1.0.0
 ```
 
 ### 方式三：本地开发（不推送仓库）
@@ -250,10 +243,10 @@ logging:
 
 ```yaml
 volumes:
-  - /data/models:/app/models:ro
+  - /data/models:/app/models
 ```
 
-即：**宿主机 `/data/models` → 容器 `/app/models`（只读）**。
+即：**宿主机 `/data/models` → 容器 `/app/models`（可写）**。首次启动如果本地没有完整模型缓存，ModelScope / HuggingFace 可能会在该目录补齐缓存文件。
 
 #### 宿主机目录结构要求
 
@@ -300,7 +293,7 @@ ls -la /data/www/whalesbot-ai-platform/picture_embedding/data/.picture_embedding
 `docker-compose.test.yml` 默认 `./models:/app/models`（相对部署目录）。若测试机也有 `/data/models`，可改为与生产相同：
 
 ```yaml
-- /data/models:/app/models:ro
+- /data/models:/app/models
 ```
 
 ### 6. 部署服务
@@ -356,7 +349,7 @@ picture-embedding:
 
 使用 `docker-compose.prod.yml`，建议：
 
-- 修改 compose 中 image 标签为实际推送的 tag（如 `picture-embedding-v1.0.0-cpu` 或 `-gpu`）
+- 修改 compose 中 image 标签为实际推送的 tag（如 `picture-embedding-v1.0.0`）
 - `server.apikey` 使用强随机密钥
 - 确认宿主机 **`/data/models`** 已就位后再 `up`
 - 防火墙仅放行内网访问 `8010`
@@ -426,7 +419,7 @@ docker images | grep whalesbot-ai-platform
 
 4. **持久化卷（生产）**  
    - `/data/www/whalesbot-ai-platform/picture_embedding/data` → `/app/data`  
-   - **`/data/models` → `/app/models:ro`**  
+   - **`/data/models` → `/app/models`**  
    - `/data/www/whalesbot-ai-platform/picture_embedding/logs` → `/app/logs`
 
 5. **网络**  
@@ -467,30 +460,30 @@ docker stats picture-embedding
 
 ### 构建卡在 `torch` / `torchvision`
 
-1. 使用 `./build-and-push.sh` 一次打出 `-cpu` 与 `-gpu`；手写 `docker build` 须带 `--build-arg TORCH_DEVICE`。
-2. GPU 版 PyTorch 走阿里云 `mirrors.aliyun.com/pytorch-wheels/cu126`（与官方 `download.pytorch.org/whl/cu126` 等价）；若镜像站暂无对应版本，可临时改 Dockerfile 回官方源或设代理。
+1. 使用 `./build-and-push.sh` 打出单一 tag；手写 `docker build` 无需 `--build-arg`。
+2. 镜像内不再区分 CPU/GPU 版本，PyTorch 固定从 Dockerfile 中配置的 PyPI 源安装。
 3. 本地开发仍用 `pip install -r requirements.txt`，与镜像构建策略无关。
 
-### CPU / GPU 镜像与部署（部署时可选）
+### CPU / GPU 部署
 
-每次发布仓库里**同时存在**两个 tag，按环境选用：
+每次发布只推送一个 tag，CPU/GPU 使用同一镜像；GPU 环境只额外叠加 NVIDIA 设备预留：
 
 | 环境 | 使用的 tag | Compose |
 |------|------------|---------|
-| 测试 / 无 GPU | `picture-embedding-<版本>-cpu` | `docker-compose.prod.yml` 或 `docker-compose.test.yml` |
-| 生产 GPU | `picture-embedding-<版本>-gpu` | `docker-compose.prod.yml` + `docker-compose.prod.gpu.yml` |
+| 测试 / 无 GPU | `picture-embedding-<版本>` | `docker-compose.prod.yml` 或 `docker-compose.test.yml` |
+| 生产 GPU | `picture-embedding-<版本>`（同一镜像） | `docker-compose.prod.yml` + `docker-compose.prod.gpu.yml` |
 
 ```bash
 # 测试 / CPU
 docker compose -f docker-compose.test.yml pull
 docker compose -f docker-compose.test.yml up -d
 
-# 生产 GPU（需 nvidia-container-toolkit；compose 内 image 改为对应 -gpu tag）
+# 生产 GPU（需 nvidia-container-toolkit；与 CPU 使用同一 image tag）
 docker compose -f docker-compose.prod.yml -f docker-compose.prod.gpu.yml pull
 docker compose -f docker-compose.prod.yml -f docker-compose.prod.gpu.yml up -d
 ```
 
-将 `docker-compose.prod.gpu.yml` 里的 `image` 版本号与 `docker-compose.prod.yml` 保持一致（仅后缀 `-gpu` 不同）。
+`docker-compose.prod.gpu.yml` 仅叠加 NVIDIA 设备预留，无需单独镜像 tag。
 
 ### 模型下载失败
 

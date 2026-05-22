@@ -1,11 +1,6 @@
 # 第一阶段：构建依赖
 FROM python:3.10-slim AS builder
 
-# cpu/cuda：阿里云 pytorch-wheels 镜像（需 GPU 运行时配 nvidia-container-toolkit）
-# 构建时由 build-and-push 传入：TORCH_DEVICE=cpu|cuda（脚本会各打一张镜像）
-ARG TORCH_DEVICE=cpu
-ARG TORCH_CUDA=cu126
-
 RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list 2>/dev/null || true \
     && sed -i 's/security.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list 2>/dev/null || true \
     && sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources 2>/dev/null || true \
@@ -26,28 +21,25 @@ ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
 COPY requirements-base.txt .
 
 # pip / setuptools / wheel：阿里云 PyPI
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
+RUN pip install --upgrade pip setuptools wheel \
     -i https://mirrors.aliyun.com/pypi/simple/ \
     --trusted-host mirrors.aliyun.com \
     --timeout 600
 # PyTorch：使用清华源（确保有 2.9.1 版本）
-RUN pip install --no-cache-dir --prefer-binary \
+RUN pip install --prefer-binary \
     torch==2.9.1 torchvision==0.24.1 \
     -i https://pypi.tuna.tsinghua.edu.cn/simple \
     --trusted-host pypi.tuna.tsinghua.edu.cn \
     --timeout 600 --retries 10
 
 # 其余依赖：阿里云 PyPI
-RUN pip install --no-cache-dir --prefer-binary -r requirements-base.txt \
+RUN pip install --prefer-binary -r requirements-base.txt \
     -i https://mirrors.aliyun.com/pypi/simple/ \
     --trusted-host mirrors.aliyun.com \
     --timeout 600 --retries 10
 
 # 运行阶段
 FROM python:3.10-slim
-
-ARG TORCH_DEVICE=cpu
-ENV PICTURE_EMBEDDING_TORCH_DEVICE=${TORCH_DEVICE}
 
 RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list 2>/dev/null || true \
     && sed -i 's/security.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list 2>/dev/null || true \

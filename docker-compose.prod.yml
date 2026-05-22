@@ -1,9 +1,7 @@
-version: '3.8'
-
 services:
   picture-embedding:
-    # 与平台同仓库；CPU 镜像 tag：picture-embedding-<版本>-cpu（GPU 见 docker-compose.prod.gpu.yml）
-    image: crpi-pfk0ggqf1mx18vfr.cn-shanghai.personal.cr.aliyuncs.com/whalesbot/whalesbot-ai-platform:picture-embedding-latest-cpu
+    # 与平台同仓库；镜像 tag：picture-embedding-<版本>（GPU 叠加见 docker-compose.prod.gpu.yml）
+    image: crpi-pfk0ggqf1mx18vfr.cn-shanghai.personal.cr.aliyuncs.com/whalesbot/whalesbot-ai-platform:picture-embedding-latest
 
     # 本地构建时注释 image，启用 build
     # build:
@@ -19,7 +17,8 @@ services:
     volumes:
       # 项目根: /data/www/whalesbot-ai-platform/picture_embedding
       - /data/www/whalesbot-ai-platform/picture_embedding/data:/app/data
-      - /data/models:/app/models:ro
+      # 需可写：首次启动可能下载或补齐 ModelScope / HuggingFace 缓存目录
+      - /data/model:/app/models
       - /data/www/whalesbot-ai-platform/picture_embedding/logs:/app/logs
     ports:
       - "8010:8010"

@@ -1,7 +1,6 @@
 #!/bin/sh
-# 输出 cpu 或 cuda，供手动 docker build --build-arg 使用
-# build-and-push.sh 已固定一次构建 cpu+gpu 双镜像，通常无需本脚本
-# 可覆盖：TORCH_DEVICE=cpu|cuda TORCH_CUDA=cu126（CUDA 12.6，PyTorch wheel 索引后缀）
+# 输出 cpu 或 cuda，供宿主机排查 PyTorch 设备（镜像构建已不再区分 cpu/gpu）
+# 可覆盖：TORCH_DEVICE=cpu|cuda
 
 if [ -n "${TORCH_DEVICE}" ]; then
   case "${TORCH_DEVICE}" in
@@ -17,10 +16,6 @@ else
   else
     TORCH_DEVICE=cpu
   fi
-fi
-
-if [ "${TORCH_DEVICE}" = "cuda" ] && [ -z "${TORCH_CUDA}" ]; then
-  TORCH_CUDA=cu126
 fi
 
 echo "${TORCH_DEVICE}"

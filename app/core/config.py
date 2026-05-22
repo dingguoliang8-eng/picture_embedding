@@ -6,6 +6,9 @@ import yaml
 
 logger = logging.getLogger(__name__)
 
+# app/core/config.py -> 项目根目录（Docker 内为 /app）
+_PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
 
 class Settings:
     """应用配置：优先读取 data/.picture_embedding.yaml。"""
@@ -14,7 +17,7 @@ class Settings:
         self._config = self._load_config()
 
     def _load_config(self) -> Dict[str, Any]:
-        config_path = Path("../data/.picture_embedding.yaml")
+        config_path = _PROJECT_ROOT / "data" / ".picture_embedding.yaml"
         if not config_path.exists():
             logger.error("配置文件 data/.picture_embedding.yaml 未找到，请先复制 picture_embedding.yaml。")
             raise RuntimeError("请先配置 data/.picture_embedding.yaml（可参考项目根目录 picture_embedding.yaml）")
