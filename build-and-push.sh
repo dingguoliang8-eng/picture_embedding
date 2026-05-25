@@ -29,7 +29,7 @@ echo "提示: 推送前请先登录："
 echo "  docker login --username=leocao0828 ${REGISTRY}"
 echo ""
 
-docker build -t "${LOCAL_IMAGE}" .
+DOCKER_BUILDKIT=1 docker build -t "${LOCAL_IMAGE}" .
 
 docker tag "${LOCAL_IMAGE}" "${REMOTE}"
 docker push "${REMOTE}"

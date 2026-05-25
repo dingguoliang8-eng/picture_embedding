@@ -18,7 +18,7 @@ services:
       # 项目根: /data/www/whalesbot-ai-platform/picture_embedding
       - /data/www/whalesbot-ai-platform/picture_embedding/data:/app/data
       # 需可写：首次启动可能下载或补齐 ModelScope / HuggingFace 缓存目录
-      - /data/model:/app/models
+      - /data/models:/app/models
       - /data/www/whalesbot-ai-platform/picture_embedding/logs:/app/logs
     ports:
       - "8010:8010"

@@ -27,6 +27,7 @@ echo 提示: 推送前请先登录：
 echo   docker login --username=leocao0828 %REGISTRY%
 echo.
 
+set DOCKER_BUILDKIT=1
 docker build -t %LOCAL% .
 if errorlevel 1 exit /b 1
 
