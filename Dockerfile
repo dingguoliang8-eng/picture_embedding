@@ -1,15 +1,11 @@
-# syntax=docker/dockerfile:1.7
-
 # 第一阶段：构建依赖
-FROM python:3.10-slim AS builder
+FROM registry.aliyuncs.com/library/python:3.10-slim AS builder
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
     rm -f /etc/apt/apt.conf.d/docker-clean \
     && sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list 2>/dev/null || true \
     && sed -i 's/security.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list 2>/dev/null || true \
-    && sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources 2>/dev/null || true \
-    && sed -i 's/security.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources 2>/dev/null || true \
     && apt-get update \
     && apt-get install -y --no-install-recommends \
         gcc \
@@ -24,13 +20,13 @@ ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
 
 COPY requirements-base.txt .
 
-# pip / setuptools / wheel：阿里云 PyPI
+# pip 升级
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install --upgrade pip setuptools wheel \
     -i https://mirrors.aliyun.com/pypi/simple/ \
-    --trusted-host mirrors.aliyun.com \
-    --timeout 600
-# PyTorch：使用清华源（确保有 2.9.1 版本）
+    --trusted-host mirrors.aliyun.com
+
+# 安装 torch
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install --prefer-binary \
     torch==2.9.1 torchvision==0.24.1 \
@@ -38,7 +34,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     --trusted-host pypi.tuna.tsinghua.edu.cn \
     --timeout 600 --retries 10
 
-# 其余依赖：阿里云 PyPI
+# 安装依赖
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install --prefer-binary -r requirements-base.txt \
     -i https://mirrors.aliyun.com/pypi/simple/ \
@@ -46,15 +42,13 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     --timeout 600 --retries 10
 
 # 运行阶段
-FROM python:3.10-slim
+FROM registry.aliyuncs.com/library/python:3.10-slim
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
     rm -f /etc/apt/apt.conf.d/docker-clean \
     && sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list 2>/dev/null || true \
     && sed -i 's/security.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list 2>/dev/null || true \
-    && sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources 2>/dev/null || true \
-    && sed -i 's/security.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources 2>/dev/null || true \
     && apt-get update \
     && apt-get install -y --no-install-recommends \
         libglib2.0-0 \
@@ -62,6 +56,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         libgl1
 
 WORKDIR /app
+
 COPY --from=builder /usr/local/lib/python3.10/site-packages /usr/local/lib/python3.10/site-packages
 
 RUN mkdir -p tmp data models
