@@ -1,5 +1,5 @@
 # 第一阶段：构建依赖
-FROM registry.aliyuncs.com/library/python:3.10-slim AS builder
+FROM docker.m.daocloud.io/library/python:3.10-slim AS builder
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
@@ -42,7 +42,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     --timeout 600 --retries 10
 
 # 运行阶段
-FROM registry.aliyuncs.com/library/python:3.10-slim
+FROM docker.m.daocloud.io/library/python:3.10-slim
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
